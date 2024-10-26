@@ -1,6 +1,9 @@
 package main
 
-import "gorm.io/gorm"
+import (
+  "github.com/dgrijalva/jwt-go"
+    "gorm.io/gorm"
+)
 
 type CreateUserData struct {
 	gorm.Model
@@ -9,4 +12,5 @@ type CreateUserData struct {
 	Password string `json:"password"`
 	Gender   string `json:"Gender"`
 	Comapny  string `json:"Company"`
+	jwt.StandardClaims
 }

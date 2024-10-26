@@ -2,10 +2,16 @@ package main
 
 import (
 	"encoding/json"
-	"golang.org/x/crypto/bcrypt"
+
 	"net/http"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
+
+var jwtkey =[]byte("Abdullah")
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -52,61 +58,99 @@ func sign(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var MatchuserData CreateUserData
 	var Extinguser CreateUserData;
-	json.NewDecoder(r.Body).Decode(MatchuserData);
-	if err :=databas.Where("email =?",MatchuserData.Email).First(&Extinguser).Error;err !=nil {
+	json.NewDecoder(r.Body).Decode(&MatchuserData)
+
+	if err := databas.Where("email =?", MatchuserData.Email).First(&Extinguser).Error; err != nil {
        http.Error(w,"user Email not Found",http.StatusUnauthorized)
 	   return		
 	}
 	
 	if !CompareHashAndPassword(MatchuserData.Password,Extinguser.Password) {
-		http.Error(w,"involid password",http.StatusUnauthorized)
+	
+		http.Error(w, "invalid password", http.StatusUnauthorized)
+
 	}
      
 
+    
+	 expirationTime :=time.Now().Add(24 * time.Hour)
+	 claims := &CreateUserData{
+        Name:     Extinguser.Name,
+        Email:    Extinguser.Email,
+        Password: Extinguser.Password,
+        Gender:   Extinguser.Gender,
+		Comapny: Extinguser.Comapny,  // Corrected spelling
+
+
+        StandardClaims: jwt.StandardClaims{
+            ExpiresAt: expirationTime.Unix(),
+        },
+	 }
+
+
+token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+tokenString,err :=token.SignedString(jwtkey)
+
+if err != nil{
+	http.Error(w, "Error signing token", http.StatusInternalServerError)
+    return
+}
+
+json.NewEncoder(w).Encode(map[string]string{
+	"token": tokenString,
+})
+}
+
+
+
+func login(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+  var MatchuserData CreateUserData;
+  var Extinguser CreateUserData
+
+  json.NewDecoder(r.Body).Decode(&MatchuserData);
+
+  if err :=databas.Where("email = ? ",MatchuserData.Email).First(&Extinguser).Error;err !=nil{
+	http.Error(w,"User Email not Found",http.StatusUnauthorized)
+	return
+  }
+
+  if !CompareHashAndPassword(MatchuserData.Password,Extinguser.Password) {
+	http.Error(w, "invalid password", http.StatusUnauthorized)
+	return
+  }
+  
+  TokenExpire :=time.Now().Add(24*time.Hour)
+  cleams :=&CreateUserData{
+	Name:     Extinguser.Name,
+    Email:    Extinguser.Email,
+    Password: Extinguser.Password,
+    Gender:   Extinguser.Gender,
+    Comapny: Extinguser.Comapny, 
+	StandardClaims: jwt.StandardClaims{
+		ExpiresAt: TokenExpire.Unix(),
+	},
+  }
+
+ 
+
+ 
+
+ token := jwt.NewWithClaims(jwt.SigningMethodHS256,cleams)
+ tokenString,err := token.SignedString(jwtkey)
+ 
+ if err !=nil {
+	http.Error(w, "Error signing token", http.StatusInternalServerError)
+   return
+ }
+ 
+ json.NewEncoder(w).Encode(map[string]string{
+	 "token": tokenString,
+ })
 
 }
 
-// var jwtKey = []byte("abdullah")
-// func login(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	var userdatac CreateUserData
-// 	var dbUser CreateUserData
 
-// 	// Decode incoming request for email and password
-// 	json.NewDecoder(r.Body).Decode(&userdatac)
-
-// 	// Find user by email in the database
-// 	if err := Database.Where("email = ?", userdatac.Email).First(&dbUser).Error; err != nil {
-// 		http.Error(w, "User not found", http.StatusUnauthorized)
-// 		return
-// 	}
-
-// 	// Check password hash
-// 	if !CheckPasswordHash(userdatac.Password, dbUser.Password) {
-// 		http.Error(w, "Invalid password", http.StatusUnauthorized)
-// 		return
-// 	}
-
-// 	// Create JWT token with all user data
-// 	expirationTime := time.Now().Add(24 * time.Hour) // Token valid for 24 hours
-// 	claims := &CreateUserData{
-// 		UserName: dbUser.UserName,
-// 		Email:    dbUser.Email,
-// 		Password: dbUser.Password, // Include only if necessary (not recommended)
-// 		Age:      dbUser.Age,
-// 		Gender:   dbUser.Gender,
-// 		StandardClaims: jwt.StandardClaims{
-// 			ExpiresAt: expirationTime.Unix(),
-// 		},
-// 	}
-
-// 	// Generate token
-// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-// 	tokenString, err := token.SignedString(jwtKey)
-// 	if err != nil {
-// 		http.Error(w, "Error generating token", http.StatusInternalServerError)
-// 		return
-// 	}
 
 // 	// Return the token
 // 	json.NewEncoder(w).Encode(map[string]string{
