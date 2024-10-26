@@ -14,6 +14,7 @@ func HashPassword(password string) (string, error) {
 func CompareHashAndPassword(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	if err != nil {
+
 		return false // Password does not match the stored hash.
 
 	}
@@ -49,15 +50,20 @@ func Createuserdata(w http.ResponseWriter, r *http.Request) {
 
 func sign(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var createcserdata CreateUserData
-	var userdata CreateUserData
-
-	json.NewDecoder(r.Body).Decode(&createcserdata)
-
-	if errr := databas.Where("email =?", userdata.Email).First(&userdata).Error; errr != nil {
-		http.Error(w, "user Email not found ", http.StatusBadRequest)
-		return
+	var MatchuserData CreateUserData
+	var Extinguser CreateUserData;
+	json.NewDecoder(r.Body).Decode(MatchuserData);
+	if err :=databas.Where("email =?",MatchuserData.Email).First(&Extinguser).Error;err !=nil {
+       http.Error(w,"user Email not Found",http.StatusUnauthorized)
+	   return		
 	}
+	
+	if !CompareHashAndPassword(MatchuserData.Password,Extinguser.Password) {
+		http.Error(w,"involid password",http.StatusUnauthorized)
+	}
+     
+
+
 }
 
 // var jwtKey = []byte("abdullah")
@@ -106,4 +112,36 @@ func sign(w http.ResponseWriter, r *http.Request) {
 // 	json.NewEncoder(w).Encode(map[string]string{
 // 		"token": tokenString,
 // 	})
+// }
+
+
+// func decodeToken(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/json")
+
+// 	// Get the token from the URL query parameter
+// 	tokenStr := r.URL.Query().Get("token")
+
+// 	// Parse the token and validate its signature
+// 	claims := &CreateUserData{}
+// 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+// 		return jwtKey, nil // Replace jwtKey with your secret key
+// 	})
+
+// 	// Check if there was an error in decoding or if the token is invalid
+// 	if err != nil || !token.Valid {
+// 		http.Error(w, "Invalid token", http.StatusUnauthorized)
+// 		return
+// 	}
+
+// 	// Return user data based on the token
+// 	userData := map[string]interface{}{
+// 		"UserName": claims.UserName,
+// 		"Email":    claims.Email,
+// 		"Password": claims.Password, // Include only if necessary
+// 		"Age":      claims.Age,
+// 		"Gender":   claims.Gender,
+// 	}
+
+// 	// Return the extracted user data as a JSON response
+// 	json.NewEncoder(w).Encode(userData)
 // }
