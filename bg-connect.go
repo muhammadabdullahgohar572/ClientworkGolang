@@ -1,24 +1,36 @@
 package main
 
 import (
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+    "log"
+    "os"
+    "github.com/joho/godotenv"
+    "gorm.io/driver/mysql"
+    "gorm.io/gorm"
 )
 
-var urlbfconnect = "root:ilove1382005#@tcp(localhost:3306)/practice2?parseTime=true"
-
 var databas *gorm.DB
+var err error
 
-var err  error;
-
-func Dbconnect() {
-
-	databas,err =gorm.Open(mysql.Open(urlbfconnect),&gorm.Config{})
-	if err != nil {
-		panic("DataBaseconnection Error")
-	}
-	databas.AutoMigrate(&CreateUserData{}) 
+func init() {
+    // Load environment variables from .env file
+    if err := godotenv.Load(); err != nil {
+        log.Fatalf("Error loading .env file")
+    }
 }
 
+func Dbconnect() {
+    // Retrieve the database URL from environment
+    Dbconnectur := os.Getenv("Dgconnect")
+    if Dbconnectur == "" {
+        log.Fatal("Dgconnect environment variable not set")
+    }
 
+    // Open database connection
+    databas, err = gorm.Open(mysql.Open(Dbconnectur), &gorm.Config{})
+    if err != nil {
+        log.Fatalf("failed to initialize database, got error: %v", err)
+    }
 
+    // Automatically migrate schema
+    databas.AutoMigrate(&CreateUserData{})
+}

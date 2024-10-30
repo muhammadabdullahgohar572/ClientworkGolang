@@ -2,16 +2,17 @@ package main
 
 import (
 	"encoding/json"
+    "net/http"
+    "os"
+    "time"
 
-	"net/http"
-	"time"
-
-	"github.com/dgrijalva/jwt-go"
-	"golang.org/x/crypto/bcrypt"
+    "github.com/dgrijalva/jwt-go"
+    "golang.org/x/crypto/bcrypt"
 )
 
+var jwtKey []byte
 
-var jwtkey =[]byte("Abdullah")
+
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -54,56 +55,107 @@ func Createuserdata(w http.ResponseWriter, r *http.Request) {
 
 }
 
-
-
-
 func login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-  var MatchuserData CreateUserData;
-  var Extinguser CreateUserData
+	var MatchuserData CreateUserData
+	var Extinguser CreateUserData
 
-  json.NewDecoder(r.Body).Decode(&MatchuserData);
+	json.NewDecoder(r.Body).Decode(&MatchuserData)
 
-  if err :=databas.Where("email = ? ",MatchuserData.Email).First(&Extinguser).Error;err !=nil{
-	http.Error(w,"User Email not Found",http.StatusUnauthorized)
-	return
-  }
+	if err := databas.Where("email = ? ", MatchuserData.Email).First(&Extinguser).Error; err != nil {
+		http.Error(w, "User Email not Found", http.StatusUnauthorized)
+		return
+	}
 
-  if !CompareHashAndPassword(MatchuserData.Password,Extinguser.Password) {
-	http.Error(w, "invalid password", http.StatusUnauthorized)
-	return
-  }
-  
-  TokenExpire :=time.Now().Add(24*time.Hour)
-  cleams :=&CreateUserData{
-	Name:     Extinguser.Name,
-    Email:    Extinguser.Email,
-    Password: Extinguser.Password,
-    Gender:   Extinguser.Gender,
-    Comapny: Extinguser.Comapny, 
-	StandardClaims: jwt.StandardClaims{
-		ExpiresAt: TokenExpire.Unix(),
-	},
-  }
+	if !CompareHashAndPassword(MatchuserData.Password, Extinguser.Password) {
+		http.Error(w, "invalid password", http.StatusUnauthorized)
+		return
+	}
 
- 
+	TokenExpire := time.Now().Add(24 * time.Hour)
+	cleams := &CreateUserData{
+		Name:     Extinguser.Name,
+		Email:    Extinguser.Email,
+		Password: Extinguser.Password,
+		Gender:   Extinguser.Gender,
+		Comapny:  Extinguser.Comapny,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: TokenExpire.Unix(),
+		},
+	}
 
- 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, cleams)
+	tokenString, err := token.SignedString(jwtKey)
 
- token := jwt.NewWithClaims(jwt.SigningMethodHS256,cleams)
- tokenString,err := token.SignedString(jwtkey)
- 
- if err !=nil {
-	http.Error(w, "Error signing token", http.StatusInternalServerError)
-   return
- }
- 
- json.NewEncoder(w).Encode(map[string]string{
-	 "token": tokenString,
- })
+	if err != nil {
+		http.Error(w, "Error signing token", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": tokenString,
+	})
 
 }
 
+func sign(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var Extinguser CreateUserData
+	var MatchuserData CreateUserData
+
+	json.NewDecoder(r.Body).Decode(&MatchuserData)
+
+	if err := databas.Where("email = ?", MatchuserData.Email).First(&Extinguser).Error; err != nil {
+
+		http.Error(w, "email not found", http.StatusUnauthorized)
+		return
+	}
+
+	if !CompareHashAndPassword(MatchuserData.Password, Extinguser.Password) {
+		http.Error(w, "invalid password", http.StatusUnauthorized)
+		return
+	}
+
+	TokenExpire :=time.Now().Add(24 * time.Hour)
+   
+	Cleaims :=  &CreateUserData{
+		Name:     Extinguser.Name,
+        Email:    Extinguser.Email,
+        Password: Extinguser.Password,
+        Gender:   Extinguser.Gender,
+        Comapny:  Extinguser.Comapny,
+        StandardClaims: jwt.StandardClaims{
+			ExpiresAt: TokenExpire.Unix(),
+		},
+	}
+
+
+	jwtKey = []byte(os.Getenv("JWT_SECRET_KEY"))
+      token :=jwt.NewWithClaims(jwt.SigningMethodHS256,Cleaims)
+     
+	  tokenstring,err :=token.SignedString(jwtKey)
+if err !=nil {
+	http.Error(w, "Error signing token", http.StatusInternalServerError)
+	return
+}
+
+json.NewEncoder(w).Encode(map[string]string{
+	"token": tokenstring,
+})
+
+ 
+}
+//  token := jwt.NewWithClaims(jwt.SigningMethodHS256, cleams)
+// 	tokenString, err := token.SignedString(jwtkey)
+
+// 	if err != nil {
+// 		http.Error(w, "Error signing token", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	json.NewEncoder(w).Encode(map[string]string{
+// 		"token": tokenString,
+// 	})
 
 
 // 	// Return the token
@@ -111,7 +163,6 @@ func login(w http.ResponseWriter, r *http.Request) {
 // 		"token": tokenString,
 // 	})
 // }
-
 
 // func decodeToken(w http.ResponseWriter, r *http.Request) {
 // 	w.Header().Set("Content-Type", "application/json")
