@@ -54,52 +54,6 @@ func Createuserdata(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func sign(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var MatchuserData CreateUserData
-	var Extinguser CreateUserData;
-	json.NewDecoder(r.Body).Decode(&MatchuserData)
-
-	if err := databas.Where("email =?", MatchuserData.Email).First(&Extinguser).Error; err != nil {
-       http.Error(w,"user Email not Found",http.StatusUnauthorized)
-	   return		
-	}
-	
-	if !CompareHashAndPassword(MatchuserData.Password,Extinguser.Password) {
-	
-		http.Error(w, "invalid password", http.StatusUnauthorized)
-
-	}
-     
-
-    
-	 expirationTime :=time.Now().Add(24 * time.Hour)
-	 claims := &CreateUserData{
-        Name:     Extinguser.Name,
-        Email:    Extinguser.Email,
-        Password: Extinguser.Password,
-        Gender:   Extinguser.Gender,
-		Comapny: Extinguser.Comapny,  // Corrected spelling
-
-
-        StandardClaims: jwt.StandardClaims{
-            ExpiresAt: expirationTime.Unix(),
-        },
-	 }
-
-
-token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-tokenString,err :=token.SignedString(jwtkey)
-
-if err != nil{
-	http.Error(w, "Error signing token", http.StatusInternalServerError)
-    return
-}
-
-json.NewEncoder(w).Encode(map[string]string{
-	"token": tokenString,
-})
-}
 
 
 
