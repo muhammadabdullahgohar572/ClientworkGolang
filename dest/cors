@@ -1,0 +1,26 @@
+package main
+
+import (
+    "net/http"
+    "github.com/rs/cors"
+)
+
+func main() {
+    mux := http.NewServeMux()
+    mux.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+        w.Write([]byte("Hello, CORS-enabled API!"))
+    })
+
+    // Create a new CORS handler with specific options
+    c := cors.New(cors.Options{
+        AllowedOrigins:   []string{"http://example.com"}, // Allow only this origin
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+        AllowedHeaders:   []string{"Content-Type", "Authorization"},
+        AllowCredentials: true,
+    })
+
+    // Wrap the default mux with the CORS middleware
+    handler := c.Handler(mux)
+
+    http.ListenAndServe(":8080", handler)
+}
