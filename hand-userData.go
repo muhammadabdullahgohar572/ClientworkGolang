@@ -2,16 +2,15 @@ package main
 
 import (
 	"encoding/json"
-    "net/http"
-    "os"
-    "time"
+	"net/http"
+	"os"
+	"time"
 
-    "github.com/dgrijalva/jwt-go"
-    "golang.org/x/crypto/bcrypt"
+	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var jwtKey []byte
-
 
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
@@ -116,81 +115,63 @@ func sign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	TokenExpire :=time.Now().Add(24 * time.Hour)
-   
-	Cleaims :=  &CreateUserData{
+	TokenExpire := time.Now().Add(24 * time.Hour)
+
+	Cleaims := &CreateUserData{
 		Name:     Extinguser.Name,
-        Email:    Extinguser.Email,
-        Password: Extinguser.Password,
-        Gender:   Extinguser.Gender,
-        Comapny:  Extinguser.Comapny,
-        StandardClaims: jwt.StandardClaims{
+		Email:    Extinguser.Email,
+		Password: Extinguser.Password,
+		Gender:   Extinguser.Gender,
+		Comapny:  Extinguser.Comapny,
+		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: TokenExpire.Unix(),
 		},
 	}
 
-
 	jwtKey = []byte(os.Getenv("JWT_SECRET_KEY"))
-      token :=jwt.NewWithClaims(jwt.SigningMethodHS256,Cleaims)
-     
-	  tokenstring,err :=token.SignedString(jwtKey)
-if err !=nil {
-	http.Error(w, "Error signing token", http.StatusInternalServerError)
-	return
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Cleaims)
+
+	tokenstring, err := token.SignedString(jwtKey)
+	if err != nil {
+		http.Error(w, "Error signing token", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": tokenstring,
+	})
+
 }
 
-json.NewEncoder(w).Encode(map[string]string{
-	"token": tokenstring,
-})
+func Decode(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	tokenStr := r.URL.Query().Get("token")
+	if jwtKey == nil {
+		jwtKey = []byte(os.Getenv("JWT_SECRET_KEY"))
+	}
+	cleims := &CreateUserData{}
 
- 
+	token, err := jwt.ParseWithClaims(tokenStr, cleims, func(*jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	userData := map[string]interface{}{
+		"UserName": cleims.Name,
+		"Email":    cleims.Email,
+		"Password": cleims.Password, // Include only if necessary
+		"Age":      cleims.Comapny,
+		"Gender":   cleims.Gender,
+	}
+
+	if err := json.NewEncoder(w).Encode(userData); err != nil {
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
 }
-//  token := jwt.NewWithClaims(jwt.SigningMethodHS256, cleams)
-// 	tokenString, err := token.SignedString(jwtkey)
 
-// 	if err != nil {
-// 		http.Error(w, "Error signing token", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	json.NewEncoder(w).Encode(map[string]string{
-// 		"token": tokenString,
-// 	})
-
-
-// 	// Return the token
-// 	json.NewEncoder(w).Encode(map[string]string{
-// 		"token": tokenString,
-// 	})
-// }
-
-// func decodeToken(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-
-// 	// Get the token from the URL query parameter
-// 	tokenStr := r.URL.Query().Get("token")
-
-// 	// Parse the token and validate its signature
-// 	claims := &CreateUserData{}
-// 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-// 		return jwtKey, nil // Replace jwtKey with your secret key
-// 	})
-
-// 	// Check if there was an error in decoding or if the token is invalid
-// 	if err != nil || !token.Valid {
-// 		http.Error(w, "Invalid token", http.StatusUnauthorized)
-// 		return
-// 	}
-
-// 	// Return user data based on the token
-// 	userData := map[string]interface{}{
-// 		"UserName": claims.UserName,
-// 		"Email":    claims.Email,
-// 		"Password": claims.Password, // Include only if necessary
-// 		"Age":      claims.Age,
-// 		"Gender":   claims.Gender,
-// 	}
-
-// 	// Return the extracted user data as a JSON response
-// 	json.NewEncoder(w).Encode(userData)
-// }
+// http://localhost:8080/Decode?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MCwiQ3JlYXRlZEF0IjoiMDAwMS0wMS0wMVQwMDowMDowMFoiLCJVcGRhdGVkQXQiOiIwMDAxLTAxLTAxVDAwOjAwOjAwWiIsIkRlbGV0ZWRBdCI6bnVsbCwibmFtZSI6ImFiZHVsbGFoOCIsImVtYWlsIjoiYWJkdWxsYWg5IiwicGFzc3dvcmQiOiIkMmEkMTQkUFF2M3BYS0s2bmtkVXo0ZDAuTURndVB0clRjejB3bVpZS1hVSlA5OGVwQ05CRGJXV0JYTjYiLCJHZW5kZXIiOiJNYWxlIiwiQ29tcGFueSI6IlRlY2ggSW5ub3ZhdG9ycyIsImV4cCI6MTczMDU0NTAwMn0.uWzVfBoeMEFt3RCtGV779sPmtlbrW2WWkMlbhAA_nZk

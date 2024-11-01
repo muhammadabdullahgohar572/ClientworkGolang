@@ -15,6 +15,9 @@ func route() {
 	r.HandleFunc("/test1",sign).Methods("POST")
 	
 	r.HandleFunc("/test2",login).Methods("POST")
+	r.HandleFunc("/Decode",Decode).Methods("POST")
+
+
 	
 	log.Fatal(http.ListenAndServe(":8080", r))
 	
