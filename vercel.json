@@ -5,5 +5,14 @@
       "src": "main.go",
       "use": "@vercel/go"
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "main.go"
+    }
+  ],
+  "env": {
+    "Dgconnect": "root:ilove1382005#@tcp(localhost:3306)/practice2?parseTime=true"
+  }
 }
