@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
     "github.com/gorilla/mux"
@@ -19,7 +19,7 @@ func CORS(next http.Handler) http.Handler {
     })
 }
 
-// setupRouter returns an http.Handler instead of starting the server directly
+// Return an http.Handler instead of starting the server directly
 func setupRouter() *mux.Router {
     r := mux.NewRouter()
     r.Use(CORS)

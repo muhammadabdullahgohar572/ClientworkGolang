@@ -1,10 +1,11 @@
-package main
+package handler
 
 import (
     "log"
     "net/http"
 )
 
+// Local main function for development/testing
 func main() {
     // Local server startup for development
     Dbconnect()
