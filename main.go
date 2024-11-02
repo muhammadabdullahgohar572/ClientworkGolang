@@ -1,18 +1,19 @@
-package main
+package handler
 
 import (
     "log"
     "net/http"
 )
 
+// Entry point for Vercel serverless function
 func Handler(w http.ResponseWriter, r *http.Request) {
-    Dbconnect()  // Initialize your database connection
-    router := setupRouter()  // Initialize your router
-    router.ServeHTTP(w, r)  // Serve HTTP request with the router
+    Dbconnect()               // Initialize the database connection
+    router := setupRouter()    // Setup the router
+    router.ServeHTTP(w, r)     // Serve the HTTP request with the router
 }
 
+// Optional main function for local development
 func main() {
-    // Local server startup for development purposes
     Dbconnect()
     router := setupRouter()
     log.Println("Starting server on :8080...")
