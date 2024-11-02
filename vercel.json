@@ -9,7 +9,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "main.go"
+      "dest": "main.go bg-connect.go route.go struct.go hand-userData.go"
     }
   ]
 }
