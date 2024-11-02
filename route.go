@@ -2,7 +2,6 @@ package main
 
 import (
     "github.com/gorilla/mux"
-    "log"
     "net/http"
 )
 
@@ -20,7 +19,8 @@ func CORS(next http.Handler) http.Handler {
     })
 }
 
-func route() {
+// setupRouter returns an http.Handler instead of starting the server directly
+func setupRouter() *mux.Router {
     r := mux.NewRouter()
     r.Use(CORS)
 
@@ -30,6 +30,5 @@ func route() {
     r.HandleFunc("/test2", login).Methods("POST", "OPTIONS")
     r.HandleFunc("/Decode", Decode).Methods("POST", "OPTIONS")
 
-    // Start the server
-    log.Fatal(http.ListenAndServe("", r))
+    return r
 }
