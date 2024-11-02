@@ -5,11 +5,5 @@
       "src": "main.go",
       "use": "@vercel/go"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "main.go bg-connect.go route.go struct.go hand-userData.go"
-    }
   ]
 }
