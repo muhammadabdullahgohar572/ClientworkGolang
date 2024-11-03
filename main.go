@@ -1,7 +1,8 @@
 package main
 
 import (
-    "net/http"
+	"fmt"
+	"net/http"
 )
 
 func main() {
@@ -9,4 +10,7 @@ func main() {
     router := setupRouter() // Initialize the mux router
     http.Handle("/", router) // Attach router to root
     http.ListenAndServe(":8080", nil) // Start server on port 8080
+}
+func Handler(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "Hello from Vercel!")
 }
