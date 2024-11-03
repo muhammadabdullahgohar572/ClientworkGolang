@@ -1,12 +1,12 @@
-package handler
+package main
 
 import (
-    
     "net/http"
 )
 
-func Handler(w http.ResponseWriter, r *http.Request) {
-    Dbconnect()
-    router := setupRouter()
-    router.ServeHTTP(w, r)
+func main() {
+    Dbconnect() // Initialize the database connection
+    router := setupRouter() // Initialize the mux router
+    http.Handle("/", router) // Attach router to root
+    http.ListenAndServe(":8080", nil) // Start server on port 8080
 }
