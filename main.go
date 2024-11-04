@@ -1,7 +1,7 @@
 package main
 
 import (
-    "example.com/practiceno1/handler" // Import the handler package from the module path
+     
     "fmt"
     "net/http"
 )
