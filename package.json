@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "dev": "go build -o CrudAPI.exe && CrudAPI.exe"
+  },
+  "dependencies": {
+    "vercel": "^37.14.0"
+  }
+}
