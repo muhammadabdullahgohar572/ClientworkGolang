@@ -3,6 +3,7 @@ package main
 import (
     "log"
     "os"
+
     "gorm.io/driver/mysql"
     "gorm.io/gorm"
     _ "github.com/joho/godotenv/autoload" // Auto-load .env file in local development
@@ -22,6 +23,10 @@ func Dbconnect() {
         log.Fatalf("failed to connect to database: %v", err)
     }
 
-    // Optional: Automatically migrate schema
-    databas.AutoMigrate(&CreateUserData{})
+    // Automatically migrate schema
+    if err := databas.AutoMigrate(&CreateUserData{}); err != nil {
+        log.Fatalf("failed to migrate schema: %v", err)
+    }
+    
+    log.Println("Database connection and migration successful")
 }
