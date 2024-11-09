@@ -14,5 +14,5 @@ func main() {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "Hello from Vercel!")
+    fmt.Fprintln(w, "Hello from Vercel!!!")
 }
